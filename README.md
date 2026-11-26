@@ -82,4 +82,5 @@ curl http://localhost:8080/exports/grades.csv
 - A submission contains code, a link to a GitHub repository, or both.
 - A student can only submit once per exercise.
 - A submission sent after the deadline day is marked as late.
+- Late submissions lose 10 % of the grade per started day of lateness, capped at 50 %: a raw grade of 16/20 gives 16 on time, 14.4 one day late, 11.2 three days late and 8 from five days late.
 - Points are entered on the exercise's scale (10, 20, 40…) and converted to a grade out of 20.
