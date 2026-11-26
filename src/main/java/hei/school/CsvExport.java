@@ -1,6 +1,10 @@
 package hei.school;
 
 import java.math.BigDecimal;
+import java.sql.Date;
+import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -22,15 +26,16 @@ public class CsvExport {
     @GetMapping("/exports/grades.csv")
     public ResponseEntity<String> export() {
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-                "SELECT st.reference, st.full_name, st.email, st.cohort, e.title, e.deadline, s.submitted_at, s.raw_points, e.max_points, "
-                        + "(s.submitted_at::date - e.deadline) AS late_days "
+                "SELECT st.reference, st.full_name, st.email, st.cohort, e.title, e.deadline, s.submitted_at, s.raw_points, e.max_points "
                         + "FROM submission s JOIN student st ON st.id = s.student_id JOIN exercise e ON e.id = s.exercise_id "
                         + "ORDER BY st.full_name, e.deadline");
 
         StringBuilder csv = new StringBuilder();
         csv.append("reference;etudiant;email;promotion;exercice;echeance;soumis_le;jours_de_retard;en_retard;note_sur_20\n");
         for (Map<String, Object> row : rows) {
-            int lateDays = Math.max(0, ((Number) row.get("late_days")).intValue());
+            LocalDate deadline = ((Date) row.get("deadline")).toLocalDate();
+            LocalDateTime submittedAt = ((Timestamp) row.get("submitted_at")).toLocalDateTime();
+            int lateDays = Grades.lateDays(deadline, submittedAt);
             String note = "";
             if (row.get("raw_points") != null) {
                 BigDecimal raw = (BigDecimal) row.get("raw_points");

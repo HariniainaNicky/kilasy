@@ -126,7 +126,8 @@ public class SubmissionController {
             return ResponseEntity.status(404).body(Map.of("error", "Soumission introuvable"));
         }
         Map<String, Object> row = rows.get(0);
-        double max = ((BigDecimal) row.get("max_points")).doubleValue();
+        BigDecimal maxPoints = (BigDecimal) row.get("max_points");
+        double max = maxPoints.doubleValue();
         if (points < 0 || points > max) {
             return ResponseEntity.badRequest().body(Map.of("error", "Les points doivent être entre 0 et " + max));
         }
@@ -140,7 +141,6 @@ public class SubmissionController {
         int penalty = Grades.penaltyPercent(lateDays);
 
         BigDecimal rawPoints = BigDecimal.valueOf(points);
-        BigDecimal maxPoints = (BigDecimal) row.get("max_points");
         BigDecimal rawGrade = Grades.gradeOutOf20(rawPoints, maxPoints);
         BigDecimal grade = Grades.finalGrade(rawPoints, maxPoints, lateDays);
 
@@ -153,10 +153,10 @@ public class SubmissionController {
         message.setTo((String) row.get("email"));
         message.setSubject("Kilasy : nouvelle note pour " + title);
         String text = "Bonjour " + firstName + ",\n\n"
-                + "Ta note pour « " + title + " » est disponible : " + Grades.french(grade) + "/20.\n";
+                + "Ta note pour « " + title + " » est disponible : " + Grades.formatGrade(grade) + "/20.\n";
         if (lateDays > 0) {
             text += "Retard de " + lateDays + (lateDays > 1 ? " jours" : " jour")
-                    + " : pénalité de " + penalty + " % (note brute " + Grades.french(rawGrade) + "/20).\n";
+                    + " : pénalité de " + penalty + " % (note brute " + Grades.formatGrade(rawGrade) + "/20).\n";
         }
         if (feedback != null && !feedback.isBlank()) {
             text += "\nCommentaire de l'enseignant : " + feedback + "\n";

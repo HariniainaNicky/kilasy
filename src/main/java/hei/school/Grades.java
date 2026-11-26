@@ -7,7 +7,7 @@ import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
 /**
- * Note sur 20 et pénalité de retard : -10 % par jour entamé, plafonnée à -50 %.
+ * Grade out of 20 and late penalty: -10 % per started day, capped at -50 %.
  */
 public final class Grades {
 
@@ -17,7 +17,7 @@ public final class Grades {
     private Grades() {
     }
 
-    /** Jours de retard entamés (0 si rendu le jour de l'échéance ou avant). */
+    /** Started days of lateness (0 when submitted on the deadline day or before). */
     public static int lateDays(LocalDate deadline, LocalDateTime submittedAt) {
         long days = ChronoUnit.DAYS.between(deadline, submittedAt.toLocalDate());
         return (int) Math.max(0, days);
@@ -38,8 +38,8 @@ public final class Grades {
                 .divide(BigDecimal.valueOf(100), 1, RoundingMode.HALF_UP);
     }
 
-    /** 14.4 → "14,4" pour les textes français. */
-    public static String french(BigDecimal grade) {
+    /** 14.4 -> "14,4", for French user-facing texts. */
+    public static String formatGrade(BigDecimal grade) {
         return grade.toPlainString().replace('.', ',');
     }
 }
