@@ -23,17 +23,19 @@ public class CsvExport {
     public ResponseEntity<String> export() {
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(
                 "SELECT st.reference, st.full_name, st.email, st.cohort, e.title, e.deadline, s.submitted_at, s.raw_points, e.max_points, "
-                        + "(s.submitted_at::date > e.deadline) AS late "
+                        + "(s.submitted_at::date - e.deadline) AS late_days "
                         + "FROM submission s JOIN student st ON st.id = s.student_id JOIN exercise e ON e.id = s.exercise_id "
                         + "ORDER BY st.full_name, e.deadline");
 
         StringBuilder csv = new StringBuilder();
-        csv.append("reference;etudiant;email;promotion;exercice;echeance;soumis_le;en_retard;note_sur_20\n");
+        csv.append("reference;etudiant;email;promotion;exercice;echeance;soumis_le;jours_de_retard;en_retard;note_sur_20\n");
         for (Map<String, Object> row : rows) {
+            int lateDays = Math.max(0, ((Number) row.get("late_days")).intValue());
             String note = "";
             if (row.get("raw_points") != null) {
-                double n = ((BigDecimal) row.get("raw_points")).doubleValue()
-                        / ((BigDecimal) row.get("max_points")).doubleValue() * 20;
+                BigDecimal raw = (BigDecimal) row.get("raw_points");
+                BigDecimal max = (BigDecimal) row.get("max_points");
+                double n = Grades.finalGrade(raw, max, lateDays).doubleValue();
                 n = Math.floor(n * 10) / 10;
                 note = String.valueOf(n).replace('.', ',');
             }
@@ -44,7 +46,8 @@ public class CsvExport {
                     .append(row.get("title")).append(';')
                     .append(row.get("deadline")).append(';')
                     .append(row.get("submitted_at")).append(';')
-                    .append(Boolean.TRUE.equals(row.get("late")) ? "oui" : "non").append(';')
+                    .append(lateDays).append(';')
+                    .append(lateDays > 0 ? "oui" : "non").append(';')
                     .append(note).append('\n');
         }
 
